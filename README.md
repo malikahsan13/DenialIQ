@@ -23,3 +23,14 @@ PDF (277 Guide)      CSV (CARC/RARC)
  Embeddings (OpenAI / other)
       │
  Pinecone Vector DB
+
+ # Pseudo-flow
+User Query
+   ↓
+Extract Code
+   ↓
+Retrieve Context (Pinecone)
+   ↓
+Explain in Plain English
+   ↓
+Provide Fix Steps
