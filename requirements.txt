@@ -58,10 +58,11 @@ numpy==2.4.0
 openai==2.14.0
 orjson==3.11.5
 ormsgpack==1.12.1
-packaging==25.0
+packaging==24.2
 pandas==2.3.3
 parso==0.8.5
-pinecone-client==6.0.0
+pinecone==8.0.0
+pinecone-plugin-assistant==3.0.1
 pinecone-plugin-interface==0.0.7
 platformdirs==4.5.1
 prompt_toolkit==3.0.52
