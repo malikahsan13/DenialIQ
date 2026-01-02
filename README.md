@@ -34,3 +34,19 @@ Retrieve Context (Pinecone)
 Explain in Plain English
    ↓
 Provide Fix Steps
+
+
+User (Streamlit)
+      │
+      ▼
+ LangGraph Router
+      │
+ ┌────┴─────┐
+ │          │
+ ▼          ▼
+SQLite   Pinecone
+(SQL)     (RAG)
+ │          │
+ └────┬─────┘
+      ▼
+     Groq
