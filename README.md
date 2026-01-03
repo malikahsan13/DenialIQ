@@ -50,3 +50,17 @@ SQLite   Pinecone
  └────┬─────┘
       ▼
      Groq
+
+
+Sql agent
+User Question
+   ↓
+check_relevance
+   ↓
+convert_to_sql
+   ↓
+execute_sql ──(error)──▶ regenerate_query ──▶ execute_sql
+   ↓
+generate_human_readable_answer
+   ↓
+END

@@ -1,47 +1,110 @@
 import sqlite3
 import random
+from datetime import datetime, timedelta
 
-# Connect to SQLite database (creates file if it doesn't exist)
+# Connect to SQLite
 conn = sqlite3.connect("claims.db")
 cursor = conn.cursor()
 
-# Create table
+# 1️⃣ Create table if it doesn't exist
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS claims (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
     claim_number TEXT,
     patient_name TEXT,
     cpt_code TEXT,
     status TEXT,
-    amount REAL
+    billed_amount REAL,
+    allowed_amount REAL,
+    denied_amount REAL,
+    denial_code TEXT,
+    adjustment_code TEXT,
+    adjustment_amount REAL,
+    patient_responsibility REAL,
+    payer_name TEXT,
+    service_date TEXT
 )
 """)
 
-# Insert initial records
-initial_claims = [
-    ('CLM-1001', 'John Doe', '99213', 'DENIED', 125.0),
-    ('CLM-1002', 'Jane Smith', '99214', 'PAID', 210.0)
-]
+# 2️⃣ Sample data
+cpt_codes = ["99213", "99214", "99215", "93000", "71020", "80050", "36415", "99385", "99386"]
+denial_codes = ["M115", "M116", "M117", "M126", "M10", "M11", "M12", "M13", "M17", None]       # Only M/N codes
+adjustment_codes = ["Co-45", "CO-1", "CO-5", "CO-15", None]
+payers = ["Aetna", "United Healthcare", "BCBS", "Cigna", "Medicare"]
+statuses = ["PAID", "DENIED", "PARTIAL"]
+first_names = ["John", "Jane", "Ali", "Sara", "Michael", "Fatima", "David", "Ayesha"]
+last_names = ["Smith", "Khan", "Ahmed", "Brown", "Patel", "Garcia", "Lee"]
+start_date = datetime(2024, 1, 1)
 
-cursor.executemany("INSERT INTO claims (claim_number, patient_name, cpt_code, status, amount) VALUES (?, ?, ?, ?, ?)", initial_claims)
+def random_date():
+    return (start_date + timedelta(days=random.randint(0, 365))).strftime("%Y-%m-%d")
 
-# Generate more sample claims
-first_names = ['Alice', 'Bob', 'Charlie', 'David', 'Eva', 'Frank', 'Grace', 'Helen', 'Ian', 'Jack', 'Kelly', 'Liam', 'Mia', 'Noah', 'Olivia', 'Paul', 'Quinn', 'Rachel', 'Steve', 'Tina']
-last_names = ['Anderson', 'Brown', 'Clark', 'Davis', 'Evans', 'Franklin', 'Garcia', 'Harris', 'Ibrahim', 'Jones', 'Khan', 'Lewis', 'Martinez', 'Nelson', 'Olsen', 'Patel', 'Quincy', 'Roberts', 'Smith', 'Turner']
-cpt_codes = ['99213', '99214', '99215', '99385', '99386', '99203', '99204', '99205']
-statuses = ['PAID', 'DENIED', 'PENDING']
+# 3️⃣ Generate 150 claims
+records = []
 
-for i in range(100):
-    claim_number = f"CLM-{1003 + i}"
+for i in range(150):
+    claim_number = f"CLM-{5000 + i}"  # Start from 5000 to avoid conflict
     patient_name = f"{random.choice(first_names)} {random.choice(last_names)}"
     cpt_code = random.choice(cpt_codes)
     status = random.choice(statuses)
-    amount = round(random.uniform(50, 1000), 2)  # amount between 50 and 1000
-    cursor.execute("INSERT INTO claims (claim_number, patient_name, cpt_code, status, amount) VALUES (?, ?, ?, ?, ?)",
-                   (claim_number, patient_name, cpt_code, status, amount))
 
-# Commit changes and close connection
+    billed = round(random.uniform(80, 1200), 2)
+
+    if status == "PAID":
+        allowed = billed
+        denied = 0.0
+        denial_code = None
+    elif status == "DENIED":
+        allowed = 0.0
+        denied = billed
+        denial_code = random.choice(["M115", "M116", "M117", "M126", "M10", "M11", "M12", "M13", "M17"])
+    else:  # PARTIAL
+        allowed = round(billed * random.uniform(0.3, 0.8), 2)
+        denied = round(billed - allowed, 2)
+        denial_code = random.choice(["M115", "M116", "M117", "M126", "M10", "M11", "M12", "M13", "M17"])
+
+    adjustment_code = random.choice(adjustment_codes)
+    adjustment_amount = round(denied * random.uniform(0.2, 1.0), 2) if denied > 0 else 0.0
+    patient_resp = round(billed - allowed, 2) if status != "PAID" else 0.0
+
+    payer = random.choice(payers)
+    service_date = random_date()
+
+    records.append((
+        claim_number,
+        patient_name,
+        cpt_code,
+        status,
+        billed,
+        allowed,
+        denied,
+        denial_code,
+        adjustment_code,
+        adjustment_amount,
+        patient_resp,
+        payer,
+        service_date
+    ))
+
+# 4️⃣ Insert into SQLite
+cursor.executemany("""
+INSERT INTO claims (
+    claim_number,
+    patient_name,
+    cpt_code,
+    status,
+    billed_amount,
+    allowed_amount,
+    denied_amount,
+    denial_code,
+    adjustment_code,
+    adjustment_amount,
+    patient_responsibility,
+    payer_name,
+    service_date
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+""", records)
+
 conn.commit()
 conn.close()
 
-print("SQLite DB 'claims.db' created with 102 sample claims!")
+print("✅ 150 claim records with M/N codes inserted successfully.")
